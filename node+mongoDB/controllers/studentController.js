@@ -69,7 +69,7 @@ router.get('/:id', async (req, res) => {  // Note: Changed '/id' to '/:id' to co
 router.get('/delete/:id', async (req, res) => {  // Note: Added a slash before 'delete'
     try {
         await Student.findByIdAndDelete(req.params.id);
-        res.redirect('student/list');
+        res.render('student/list');
     } catch (err) {
         console.log("error in deletion : " + err);
     }
