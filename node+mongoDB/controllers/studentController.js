@@ -1,79 +1,78 @@
-const express = require("express")
-const { log } = require("handlebars")
-var router = express.Router()
-const mongoose = require('mongoose')
-const Student = mongoose.model('Student')
+const express = require("express");
+const { log } = require("handlebars");
+const router = express.Router();
+const mongoose = require('mongoose');
+const Student = mongoose.model('Student');
 
 router.get('/', (req, res) => {
-    res.render('/student/addOrEdit', {
+    res.render('student/addOrEdit', {
         viewTitle: 'Insert Student'
-    })
-})
+    });
+});
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     if (req.body._id == '') {
-        insertRecord(req, res)
+        await insertRecord(req, res);
     } else {
-        updateRecord(req, res)
+        await updateRecord(req, res);
     }
-})
-function insertRecord(req, res) {
-    var student = new Student()
+});
+
+async function insertRecord(req, res) {
+    var student = new Student();
     student.fullName = req.body.fullName;
     student.email = req.body.email;
     student.mobile = req.body.mobile;
     student.city = req.body.city;
-    student.save((err, doc) => {
-        if (!err) {
-            res.redirect('student/list')
-        } else {
-            console.log("Error during insert: " + err)
-        }
-    })
-
+    try {
+        await student.save();
+        res.redirect('student/list');
+    } catch (err) {
+        console.log("Error during insert: " + err);
+    }
 }
 
-function updateRecord(req, res) {
-    Student.findOneAndUpdate({ _id: req.body._id }, req.body, { new: true }, (err, doc) => {
-        if (!err) {
-            res.redirect('student/list')
-        } else {
-            console.log("Error during update: " + err)
-        }
-    })
+async function updateRecord(req, res) {
+    try {
+        await Student.findOneAndUpdate({ _id: req.body._id }, req.body, { new: true });
+        res.redirect('student/list');
+    } catch (err) {
+        console.log("Error during update: " + err);
+    }
 }
 
-router.get('/list', (req, res) => {
-    Student.find((err, docs) => {
-        if (!err) {
-            res.render('students/list', {
-                list: docs
-            })
-        } else {
-            console.log("error in retrieval: " + err)
-        }
-    })
-})
+router.get('/list', async (req, res) => {
+    try {
+        const docs = await Student.find();
+        res.render('student/list', {
+            list: docs
+        });
+    } catch (err) {
+        console.log("error in retrieval: " + err);
+    }
+});
 
-router.get('/id', (req, res) => {
-    Student.findById(req.params.id, (err, doc) => {
-        if (!err) {
-            res.render('students/addOrEdit', {
+router.get('/:id', async (req, res) => {  // Note: Changed '/id' to '/:id' to correctly capture the id parameter
+    try {
+        const doc = await Student.findById(req.params.id);
+        if (doc) {
+            res.render('student/addOrEdit', {
                 viewTitle: "Update Student",
                 student: doc
-            })
-            console.log(doc)
+            });
         }
-    })
-})
-router.get('delete/:id', (req, res) => {
-    Student.findByIdAndRemove(req.params.id, (err, doc) => {
-        if (!err) {
-            res.redirect('student/list')
-        } else {
-            console.log("error in deletion : " + err)
-        }
-    })
+    } catch (err) {
+        console.log(err);
+    }
+});
 
-})
-module.exports = router
+router.get('/delete/:id', async (req, res) => {  // Note: Added a slash before 'delete'
+    try {
+        await Student.findByIdAndDelete(req.params.id);
+        res.redirect('student/list');
+    } catch (err) {
+        console.log("error in deletion : " + err);
+    }
+});
+
+module.exports = router;
